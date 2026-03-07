@@ -88,11 +88,11 @@ export function Player() {
   // Bar visible when user recently interacted or video is paused. Auto-hide after 1s when playing.
   const showControls = controls.controlsVisible || !controls.isPlaying;
 
-  // Auto-hide controls after 1s when playing (all cases: fullscreen or not)
+  // Auto-hide controls after 3s when playing (all cases: fullscreen or not)
   const shouldAutoHideControls = hls.source && controls.isPlaying;
   useEffect(() => {
     if (!shouldAutoHideControls) return;
-    const t = setTimeout(() => controls.hideControls(), 1000);
+    const t = setTimeout(() => controls.hideControls(), 3000);
     return () => clearTimeout(t);
   }, [shouldAutoHideControls, controls]);
 
@@ -118,7 +118,7 @@ export function Player() {
           style={{ filter: hls.source && !controls.isPlaying && !isLoading ? "blur(8px)" : "none" }}
           playsInline
           onClick={() => {
-            controls.togglePlay();
+            if (!controls.isPlaying) controls.play();
             controls.showControls();
           }}
           crossOrigin="anonymous"
@@ -127,7 +127,7 @@ export function Player() {
           <button
             type="button"
             onClick={() => {
-              controls.togglePlay();
+              controls.play();
               controls.showControls();
             }}
             className="absolute inset-0 z-[1] flex items-center justify-center backdrop-blur-md bg-black/30 transition-opacity duration-200 ease-in-out hover:bg-black/40 focus:outline-none focus:ring-2 focus:ring-[#00f2ff] focus:ring-inset"

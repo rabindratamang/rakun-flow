@@ -172,7 +172,7 @@ export function usePlayerControls(
     hideTimeoutRef.current = setTimeout(() => {
       setControlsVisible(false);
       hideTimeoutRef.current = null;
-    }, 1000);
+    }, 3000);
   }, []);
   const hideControls = useCallback(() => {
     setControlsVisible(false);
