@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const HLS_M3U8 = "application/vnd.apple.mpegurl";
 const HLS_M3U8_ALT = "application/x-mpegURL";
 const MP2T = "video/MP2T";
@@ -96,7 +99,8 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": contentType.includes("mpegurl") ? contentType : HLS_M3U8,
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
       },
     });
   }
@@ -107,7 +111,8 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": res.headers["content-type"] ?? MP2T,
-      "Cache-Control": "public, max-age=60",
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      Pragma: "no-cache",
     },
   });
 }
