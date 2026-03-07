@@ -67,6 +67,15 @@ export function StreamSwitcher({
     setIsOpen((o) => !o);
   };
 
+  const portalTarget =
+    typeof document !== "undefined"
+      ? rootRef.current &&
+        document.fullscreenElement &&
+        document.fullscreenElement.contains(rootRef.current)
+        ? document.fullscreenElement
+        : document.body
+      : null;
+
   return (
     <div ref={rootRef} className="relative">
       <button
@@ -94,7 +103,7 @@ export function StreamSwitcher({
       </button>
 
       {isOpen &&
-        typeof document !== "undefined" &&
+        portalTarget &&
         createPortal(
           <>
             {/* Backdrop: full screen on mobile for bottom sheet, transparent on md+ */}
@@ -151,7 +160,7 @@ export function StreamSwitcher({
               </ul>
             </div>
           </>,
-          document.body
+          portalTarget
         )}
     </div>
   );

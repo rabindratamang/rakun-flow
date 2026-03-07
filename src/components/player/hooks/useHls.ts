@@ -16,8 +16,25 @@ export interface HlsLevel {
   name?: string;
 }
 
+function mediaErrorMessage(mediaError: MediaError | null | undefined): string {
+  if (!mediaError) return "Playback failed";
+  switch (mediaError.code) {
+    case MediaError.MEDIA_ERR_ABORTED:
+      return "Playback was aborted";
+    case MediaError.MEDIA_ERR_NETWORK:
+      return "Network error. Check the stream URL or connection.";
+    case MediaError.MEDIA_ERR_DECODE:
+      return "Decoding error. The stream may be corrupted or unsupported.";
+    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+      return "Stream not supported or invalid URL.";
+    default:
+      return mediaError.message || "Playback failed";
+  }
+}
+
 export function useHls(videoRef: React.RefObject<HTMLVideoElement | null>) {
   const hlsRef = useRef<Hls | null>(null);
+  const nativeErrorHandlerRef = useRef<(() => void) | null>(null);
   const [levels, setLevels] = useState<HlsLevel[]>([]);
   const [currentLevel, setCurrentLevel] = useState<number>(-1); // -1 = auto
   const [error, setError] = useState<Error | null>(null);
@@ -26,6 +43,10 @@ export function useHls(videoRef: React.RefObject<HTMLVideoElement | null>) {
   const clearSource = useCallback(() => {
     const video = videoRef.current;
     if (video) {
+      if (nativeErrorHandlerRef.current) {
+        video.removeEventListener("error", nativeErrorHandlerRef.current);
+        nativeErrorHandlerRef.current = null;
+      }
       setError(null);
       destroyHls(hlsRef.current, video);
       hlsRef.current = null;
@@ -40,6 +61,10 @@ export function useHls(videoRef: React.RefObject<HTMLVideoElement | null>) {
       const video = videoRef.current;
       if (!video) return;
 
+      if (nativeErrorHandlerRef.current) {
+        video.removeEventListener("error", nativeErrorHandlerRef.current);
+        nativeErrorHandlerRef.current = null;
+      }
       setError(null);
       destroyHls(hlsRef.current, video);
       hlsRef.current = null;
@@ -63,6 +88,14 @@ export function useHls(videoRef: React.RefObject<HTMLVideoElement | null>) {
       );
       hlsRef.current = hls;
       setSourceState(url);
+
+      if (!hls) {
+        const handler = () => {
+          setError(new Error(mediaErrorMessage(video.error)));
+        };
+        nativeErrorHandlerRef.current = handler;
+        video.addEventListener("error", handler);
+      }
     },
     [videoRef]
   );

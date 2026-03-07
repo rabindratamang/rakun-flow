@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Loader2, Play } from "lucide-react";
+import { AlertCircle, Loader2, Play } from "lucide-react";
 import { useHls } from "./hooks/useHls";
 import { usePlayerControls } from "./hooks/usePlayerControls";
 import { ControlBar } from "./ControlBar";
@@ -153,22 +153,19 @@ export function Player({ predefinedStreams }: PlayerProps) {
         )}
         {hls.error && (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#121212]/90 p-6"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-[#121212]/95 p-6"
             role="alert"
+            aria-live="assertive"
           >
-            <p className="text-center text-red-400">
-              {hls.error.message}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                hls.clearSource();
-                setShowUrlBar(true);
-              }}
-              className="rounded-lg bg-[#00f2ff] px-4 py-2 text-[#121212] transition-opacity duration-200 ease-in-out hover:opacity-90"
-            >
-              Try another URL
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <AlertCircle className="h-12 w-12 shrink-0 text-red-400" aria-hidden />
+              <h3 className="text-sm font-medium uppercase tracking-wider text-red-400">
+                Stream error
+              </h3>
+              <p className="max-w-md text-center text-sm text-zinc-300">
+                {hls.error.message}
+              </p>
+            </div>
           </div>
         )}
         {displayUrlBar && (
