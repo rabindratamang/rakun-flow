@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Rakun Flow — HLS Player",
-  description: "Professional-grade, web-based HLS media player",
+  description: "web-based HLS media player",
 };
 
 export default function RootLayout({

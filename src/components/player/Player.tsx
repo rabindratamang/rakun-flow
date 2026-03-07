@@ -45,10 +45,18 @@ export function Player() {
     [hls]
   );
 
+  const autoPlayDoneRef = useRef(false);
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    const onCanPlay = () => setIsLoading(false);
+    autoPlayDoneRef.current = false;
+    const onCanPlay = () => {
+      setIsLoading(false);
+      if (!autoPlayDoneRef.current) {
+        video.play().catch(() => {});
+        autoPlayDoneRef.current = true;
+      }
+    };
     const onError = () => setIsLoading(false);
     video.addEventListener("canplay", onCanPlay);
     video.addEventListener("error", onError);
@@ -77,29 +85,31 @@ export function Player() {
   // Show URL bar when there's no source and no query param
   const displayUrlBar = showUrlBar && !hls.source;
 
+  // In fullscreen (or touch), respect controlsVisible so auto-hide works. Otherwise show on hover.
+  const hasHover = typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
   const showControls =
     controls.controlsVisible ||
     !controls.isPlaying ||
-    (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches);
+    (hasHover && !controls.isFullscreen);
 
-  // On touch devices, auto-hide controls after 3s when playing
+  // Auto-hide controls after 1s when playing: on touch devices, or in fullscreen (inactivity)
+  const isTouchDevice =
+    typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
+  const shouldAutoHideControls =
+    hls.source &&
+    controls.isPlaying &&
+    (isTouchDevice || controls.isFullscreen);
   useEffect(() => {
-    if (
-      !hls.source ||
-      !controls.isPlaying ||
-      typeof window === "undefined" ||
-      !window.matchMedia("(hover: none)").matches
-    )
-      return;
-    const t = setTimeout(() => controls.hideControls(), 3000);
+    if (!shouldAutoHideControls) return;
+    const t = setTimeout(() => controls.hideControls(), 1000);
     return () => clearTimeout(t);
-  }, [hls.source, controls.isPlaying, controls]);
+  }, [shouldAutoHideControls, controls]);
 
   const handleContainerMouseMove = useCallback(() => {
     controls.showControls();
   }, [controls]);
   const handleContainerMouseLeave = useCallback(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches && !controls.isFullscreen) {
       controls.hideControls();
     }
   }, [controls]);
