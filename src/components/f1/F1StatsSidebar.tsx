@@ -29,7 +29,15 @@ export function F1StatsSidebar() {
   }, [intervals]);
 
   const sortedPositions = useMemo(() => {
-    return [...positions].sort((a, b) => a.position - b.position);
+    // One row per driver: keep best (lowest) position per driver_number
+    const byDriver = new Map<number, F1Position>();
+    for (const pos of positions) {
+      const existing = byDriver.get(pos.driver_number);
+      if (!existing || pos.position < existing.position) {
+        byDriver.set(pos.driver_number, pos);
+      }
+    }
+    return [...byDriver.values()].sort((a, b) => a.position - b.position);
   }, [positions]);
 
   return (

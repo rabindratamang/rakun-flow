@@ -68,6 +68,56 @@ async function fetchOpenF1<T>(path: string): Promise<T> {
   return res.json();
 }
 
+/** Fetch OpenF1 path; on non-2xx returns null so we can keep other 200 responses. */
+async function fetchOpenF1Optional<T>(path: string): Promise<T | null> {
+  const res = await fetch(`${OPENF1_BASE}${path}`, {
+    next: { revalidate: 0 },
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+/** Keep only the latest record per driver_number (by date) so we don't show duplicates. */
+function latestPositionPerDriver(rows: F1Position[]): F1Position[] {
+  const byDriver = new Map<number, F1Position>();
+  for (const row of rows) {
+    const existing = byDriver.get(row.driver_number);
+    const rowDate = row.date ? new Date(row.date).getTime() : 0;
+    const existingDate = existing?.date
+      ? new Date(existing.date).getTime()
+      : 0;
+    if (!existing || rowDate > existingDate) {
+      byDriver.set(row.driver_number, row);
+    }
+  }
+  return [...byDriver.values()];
+}
+
+function latestIntervalPerDriver(rows: F1Interval[]): F1Interval[] {
+  const byDriver = new Map<number, F1Interval>();
+  for (const row of rows) {
+    const existing = byDriver.get(row.driver_number);
+    const rowDate = row.date ? new Date(row.date).getTime() : 0;
+    const existingDate = existing?.date
+      ? new Date(existing.date).getTime()
+      : 0;
+    if (!existing || rowDate > existingDate) {
+      byDriver.set(row.driver_number, row);
+    }
+  }
+  return [...byDriver.values()];
+}
+
+/** One entry per driver_number (OpenF1 may return duplicates). */
+function uniqueDrivers(rows: F1Driver[]): F1Driver[] {
+  const byDriver = new Map<number, F1Driver>();
+  for (const row of rows) {
+    byDriver.set(row.driver_number, row);
+  }
+  return [...byDriver.values()];
+}
+
 async function fetchLiveData(): Promise<F1LivePayload> {
   const sessions = await fetchOpenF1<F1Session[]>(
     "/sessions?session_key=latest"
@@ -82,23 +132,30 @@ async function fetchLiveData(): Promise<F1LivePayload> {
     return { session: null, positions: [], intervals: [], drivers: [] };
   }
 
-  const positions = await fetchOpenF1<F1Position[]>(
+  const positionsRaw = await fetchOpenF1Optional<F1Position[]>(
     `/position?session_key=${sessionKey}`
   );
   await delay(DELAY_BETWEEN_REQUESTS_MS);
-  const intervals = await fetchOpenF1<F1Interval[]>(
+  const intervalsRaw = await fetchOpenF1Optional<F1Interval[]>(
     `/intervals?session_key=${sessionKey}`
   );
   await delay(DELAY_BETWEEN_REQUESTS_MS);
-  const drivers = await fetchOpenF1<F1Driver[]>(
+  const drivers = await fetchOpenF1Optional<F1Driver[]>(
     `/drivers?session_key=${sessionKey}`
+  );
+
+  const positions = latestPositionPerDriver(
+    Array.isArray(positionsRaw) ? positionsRaw : []
+  );
+  const intervals = latestIntervalPerDriver(
+    Array.isArray(intervalsRaw) ? intervalsRaw : []
   );
 
   return {
     session,
-    positions: Array.isArray(positions) ? positions : [],
-    intervals: Array.isArray(intervals) ? intervals : [],
-    drivers: Array.isArray(drivers) ? drivers : [],
+    positions,
+    intervals,
+    drivers: uniqueDrivers(Array.isArray(drivers) ? drivers : []),
   };
 }
 
