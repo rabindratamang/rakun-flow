@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Play } from "lucide-react";
 import { useHls } from "./hooks/useHls";
 import { usePlayerControls } from "./hooks/usePlayerControls";
 import { ControlBar } from "./ControlBar";
@@ -120,14 +120,15 @@ export function Player() {
       tabIndex={0}
       role="application"
       aria-label="Video player"
-      className="relative flex min-h-screen w-full flex-col bg-[#121212] outline-none"
+      className="relative flex h-screen w-full min-h-0 flex-col overflow-hidden bg-[#121212] outline-none"
       onMouseMove={handleContainerMouseMove}
       onMouseLeave={handleContainerMouseLeave}
     >
-      <div className="relative flex-1 flex items-center justify-center overflow-hidden">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         <video
           ref={videoRef}
-          className="max-h-full w-full max-w-full object-contain"
+          className="h-full w-full object-contain transition-[filter] duration-200 ease-in-out"
+          style={{ filter: hls.source && !controls.isPlaying && !isLoading ? "blur(8px)" : "none" }}
           playsInline
           onClick={() => {
             controls.togglePlay();
@@ -135,6 +136,21 @@ export function Player() {
           }}
           crossOrigin="anonymous"
         />
+        {hls.source && !controls.isPlaying && !isLoading && !hls.error && !displayUrlBar && (
+          <button
+            type="button"
+            onClick={() => {
+              controls.togglePlay();
+              controls.showControls();
+            }}
+            className="absolute inset-0 z-[1] flex items-center justify-center backdrop-blur-md bg-black/30 transition-opacity duration-200 ease-in-out hover:bg-black/40 focus:outline-none focus:ring-2 focus:ring-[#00f2ff] focus:ring-inset"
+            aria-label="Play"
+          >
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#00f2ff]/90 text-[#121212] transition-transform duration-200 ease-in-out hover:scale-110">
+              <Play className="h-10 w-10 ml-1" fill="currentColor" />
+            </span>
+          </button>
+        )}
         {isLoading && hls.source && !hls.error && (
           <div className="absolute inset-0 flex items-center justify-center bg-[#121212]/80" aria-hidden="true">
             <Loader2 className="h-12 w-12 animate-spin text-[#00f2ff]" />
