@@ -3,7 +3,6 @@ export interface F1StreamOption {
   url: string;
 }
 
-/** Predefined F1 stream URLs (HLS manifest). Same path as style.css but stream.m3u8. */
 export const F1_STREAMS: F1StreamOption[] = [
   { name: "Sky Moto", url: "aHR0cHM6Ly9kYXNoLnNlcnZlcGxheS5zaXRlL3NreV9tb3RvL3RyYWNrcy12MWExL3N0eWxlLmNzcw==" },
   { name: "F1 Italy", url: "aHR0cHM6Ly9kYXNoLnNlcnZlcGxheS5zaXRlL2YxX2l0YS90cmFja3MtdjFhMS9zdHlsZS5jc3M=" },
