@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const F1_API = "/api/f1/live";
-// Match server cache TTL (10s) so we stay within OpenF1 30 req/min and 3 req/s
-const POLL_INTERVAL_MS = 10_000;
+// Match server cache TTL (3s)
+const POLL_INTERVAL_MS = 3_000;
 
 export interface F1Session {
   session_key: number;
