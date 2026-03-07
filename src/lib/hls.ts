@@ -59,7 +59,7 @@ export function attachHlsSource(
     return null;
   }
   if (!Hls.isSupported()) {
-    onError?.(new Error("HLS is not supported in this browser"));
+    onError?.(new Error("Unsupported stream. HLS is not supported in this browser."));
     return null;
   }
   const hls = new Hls({
@@ -75,11 +75,59 @@ export function attachHlsSource(
   });
   hls.on(Hls.Events.ERROR, (_event, data) => {
     if (data.fatal) {
-      const message = data.error?.message ?? String(data.details ?? "HLS fatal error");
+      const message = getHlsFatalErrorMessage(data);
       onError?.(new Error(message));
     }
   });
   return hls;
+}
+
+/** Map hls.js fatal error to a precise user-facing message: network, invalid, or unsupported. */
+function getHlsFatalErrorMessage(data: { type?: string; details?: string }): string {
+  const type = data.type ?? "";
+  const details = data.details ?? "";
+  const networkDetails = [
+    "manifestLoadError",
+    "manifestLoadTimeOut",
+    "levelLoadError",
+    "levelLoadTimeOut",
+    "fragLoadError",
+    "fragLoadTimeOut",
+    "keyLoadError",
+    "keyLoadTimeOut",
+    "audioTrackLoadError",
+    "audioTrackLoadTimeOut",
+    "subtitleTrackLoadError",
+    "subtitleTrackLoadTimeOut",
+    "assetListLoadError",
+    "assetListLoadTimeout",
+  ];
+  const invalidDetails = [
+    "manifestParsingError",
+    "levelParsingError",
+    "fragParsingError",
+    "levelEmptyError",
+    "assetListParsingError",
+  ];
+  const unsupportedDetails = [
+    "manifestIncompatibleCodecsError",
+    "bufferAddCodecError",
+    "bufferIncompatibleCodecsError",
+    "attachMediaError",
+  ];
+  if (type === "networkError" || networkDetails.includes(details)) {
+    return "Network error. Check your connection and the stream URL.";
+  }
+  if (invalidDetails.includes(details)) {
+    return "Invalid stream. The URL may be wrong or the response is not valid HLS.";
+  }
+  if (type === "mediaError" || unsupportedDetails.includes(details)) {
+    return "Unsupported stream. Format or codec is not supported in this browser.";
+  }
+  if (details.includes("Key") || type === "keySystemError") {
+    return "Unsupported stream. DRM or encryption is not supported.";
+  }
+  return "Playback failed. Try another stream or check the URL.";
 }
 
 /**

@@ -17,18 +17,18 @@ export interface HlsLevel {
 }
 
 function mediaErrorMessage(mediaError: MediaError | null | undefined): string {
-  if (!mediaError) return "Playback failed";
+  if (!mediaError) return "Playback failed. Try another stream or check the URL.";
   switch (mediaError.code) {
     case MediaError.MEDIA_ERR_ABORTED:
-      return "Playback was aborted";
+      return "Playback was aborted.";
     case MediaError.MEDIA_ERR_NETWORK:
-      return "Network error. Check the stream URL or connection.";
+      return "Network error. Check your connection and the stream URL.";
     case MediaError.MEDIA_ERR_DECODE:
-      return "Decoding error. The stream may be corrupted or unsupported.";
+      return "Unsupported stream. Format or codec is not supported in this browser.";
     case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
-      return "Stream not supported or invalid URL.";
+      return "Invalid stream. The URL may be wrong or the format is not supported.";
     default:
-      return mediaError.message || "Playback failed";
+      return mediaError.message || "Playback failed. Try another stream or check the URL.";
   }
 }
 
