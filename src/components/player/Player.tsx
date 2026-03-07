@@ -18,6 +18,7 @@ export function Player({ predefinedStreams }: PlayerProps) {
   const [showUrlBar, setShowUrlBar] = useState(false);
   const [sourceFromQuery, setSourceFromQuery] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamSwitcherOpen, setStreamSwitcherOpen] = useState(false);
 
   const hls = useHls(videoRef);
   const controls = usePlayerControls(videoRef, containerRef);
@@ -95,8 +96,8 @@ export function Player({ predefinedStreams }: PlayerProps) {
   // Bar visible when user recently interacted or video is paused. Auto-hide after 1s when playing.
   const showControls = controls.controlsVisible || !controls.isPlaying;
 
-  // Auto-hide controls after 3s when playing (all cases: fullscreen or not)
-  const shouldAutoHideControls = hls.source && controls.isPlaying;
+  // Auto-hide controls after 3s when playing (all cases: fullscreen or not). Don't hide while stream switcher dropdown is open.
+  const shouldAutoHideControls = hls.source && controls.isPlaying && !streamSwitcherOpen;
   useEffect(() => {
     if (!shouldAutoHideControls) return;
     const t = setTimeout(() => controls.hideControls(), 3000);
@@ -185,6 +186,7 @@ export function Player({ predefinedStreams }: PlayerProps) {
             predefinedStreams={predefinedStreams}
             currentStreamUrl={sourceFromQuery}
             onSelectStream={predefinedStreams?.length ? loadSource : undefined}
+            onStreamSwitcherOpenChange={setStreamSwitcherOpen}
           />
         )}
       </div>

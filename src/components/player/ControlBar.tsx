@@ -23,6 +23,7 @@ interface ControlBarProps {
   predefinedStreams?: F1StreamOption[];
   currentStreamUrl?: string | null;
   onSelectStream?: (url: string) => void;
+  onStreamSwitcherOpenChange?: (open: boolean) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -39,6 +40,7 @@ export function ControlBar({
   predefinedStreams,
   currentStreamUrl,
   onSelectStream,
+  onStreamSwitcherOpenChange,
 }: ControlBarProps) {
   const {
     isPlaying,
@@ -126,6 +128,7 @@ export function ControlBar({
               streams={predefinedStreams}
               currentStreamUrl={currentStreamUrl ?? null}
               onSelectStream={onSelectStream}
+              onOpenChange={onStreamSwitcherOpenChange}
             />
           </div>
         )}
