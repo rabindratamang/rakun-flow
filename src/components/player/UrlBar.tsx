@@ -2,13 +2,15 @@
 
 import { useState, useCallback } from "react";
 import { Play } from "lucide-react";
+import { F1HomeCard } from "@/components/f1/F1HomeCard";
 
 interface UrlBarProps {
   onLoad: (url: string) => void;
   initialUrl?: string;
+  showF1Card?: boolean;
 }
 
-export function UrlBar({ onLoad, initialUrl = "" }: UrlBarProps) {
+export function UrlBar({ onLoad, initialUrl = "", showF1Card = false }: UrlBarProps) {
   const [url, setUrl] = useState(initialUrl);
   const [error, setError] = useState("");
 
@@ -33,10 +35,10 @@ export function UrlBar({ onLoad, initialUrl = "" }: UrlBarProps) {
   );
 
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#121212]">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-8 bg-[#121212] px-6">
       <form
         onSubmit={handleSubmit}
-        className="flex w-full max-w-xl flex-col gap-4 px-6"
+        className="flex w-full max-w-xl flex-col gap-4"
       >
         <label htmlFor="stream-url" className="text-sm font-medium text-[#00f2ff]">
           HLS stream URL
@@ -65,6 +67,7 @@ export function UrlBar({ onLoad, initialUrl = "" }: UrlBarProps) {
           </p>
         )}
       </form>
+      {showF1Card && <F1HomeCard />}
     </div>
   );
 }

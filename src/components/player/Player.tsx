@@ -6,8 +6,13 @@ import { useHls } from "./hooks/useHls";
 import { usePlayerControls } from "./hooks/usePlayerControls";
 import { ControlBar } from "./ControlBar";
 import { UrlBar } from "./UrlBar";
+import type { F1StreamOption } from "@/lib/f1-streams";
 
-export function Player() {
+interface PlayerProps {
+  predefinedStreams?: F1StreamOption[];
+}
+
+export function Player({ predefinedStreams }: PlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showUrlBar, setShowUrlBar] = useState(false);
@@ -66,7 +71,7 @@ export function Player() {
     };
   }, [hls.source]);
 
-  // Read ?stream= once on mount (client-side). Do not depend on loadSource to avoid infinite loop.
+  // Read ?stream= or first predefined stream once on mount (client-side). Do not depend on loadSource to avoid infinite loop.
   const initialStreamRead = useRef(false);
   useEffect(() => {
     if (initialStreamRead.current) return;
@@ -76,6 +81,8 @@ export function Player() {
     if (stream) {
       const decoded = decodeURIComponent(stream);
       loadSource(decoded);
+    } else if (predefinedStreams?.length) {
+      loadSource(predefinedStreams[0].url);
     } else {
       setShowUrlBar(true);
     }
@@ -167,6 +174,7 @@ export function Player() {
           <UrlBar
             onLoad={loadSource}
             initialUrl={sourceFromQuery ?? undefined}
+            showF1Card={!predefinedStreams?.length}
           />
         )}
         {hls.source && !displayUrlBar && (
@@ -174,6 +182,9 @@ export function Player() {
             controls={controls}
             hls={hls}
             visible={showControls}
+            predefinedStreams={predefinedStreams}
+            currentStreamUrl={sourceFromQuery}
+            onSelectStream={predefinedStreams?.length ? loadSource : undefined}
           />
         )}
       </div>

@@ -3,8 +3,6 @@
 import {
   Play,
   Pause,
-  RotateCcw,
-  RotateCw,
   Volume2,
   VolumeX,
   Maximize,
@@ -13,13 +11,18 @@ import {
 } from "lucide-react";
 import { ProgressBar } from "./ProgressBar";
 import { QualitySelector } from "./QualitySelector";
+import { StreamSwitcher } from "./StreamSwitcher";
 import type { usePlayerControls } from "./hooks/usePlayerControls";
 import type { useHls } from "./hooks/useHls";
+import type { F1StreamOption } from "@/lib/f1-streams";
 
 interface ControlBarProps {
   controls: ReturnType<typeof usePlayerControls>;
   hls: ReturnType<typeof useHls>;
   visible: boolean;
+  predefinedStreams?: F1StreamOption[];
+  currentStreamUrl?: string | null;
+  onSelectStream?: (url: string) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -29,7 +32,14 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function ControlBar({ controls, hls, visible }: ControlBarProps) {
+export function ControlBar({
+  controls,
+  hls,
+  visible,
+  predefinedStreams,
+  currentStreamUrl,
+  onSelectStream,
+}: ControlBarProps) {
   const {
     isPlaying,
     currentTime,
@@ -39,8 +49,6 @@ export function ControlBar({ controls, hls, visible }: ControlBarProps) {
     isFullscreen,
     isPiP,
     togglePlay,
-    seekBack,
-    seekForward,
     seekTo,
     setVolume,
     toggleMute,
@@ -65,11 +73,11 @@ export function ControlBar({ controls, hls, visible }: ControlBarProps) {
         duration={duration}
         onSeek={seekTo}
       />
-      <div className="flex min-h-[44px] items-center gap-2">
+      <div className="flex min-h-[44px] flex-nowrap items-center gap-2 overflow-x-auto overflow-y-hidden">
         <button
           type="button"
           onClick={togglePlay}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-[#00f2ff] transition-[opacity,color] duration-200 ease-in-out hover:opacity-90"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-[#00f2ff] transition-[opacity,color] duration-200 ease-in-out hover:opacity-90"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isPlaying ? (
@@ -78,23 +86,7 @@ export function ControlBar({ controls, hls, visible }: ControlBarProps) {
             <Play className="h-6 w-6" />
           )}
         </button>
-        <button
-          type="button"
-          onClick={seekBack}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
-          aria-label="Seek back 10 seconds"
-        >
-          <RotateCcw className="h-5 w-5" />
-        </button>
-        <button
-          type="button"
-          onClick={seekForward}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
-          aria-label="Seek forward 10 seconds"
-        >
-          <RotateCw className="h-5 w-5" />
-        </button>
-        <div className="flex min-h-[44px] items-center gap-1">
+        <div className="flex min-h-[44px] shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={toggleMute}
@@ -118,19 +110,30 @@ export function ControlBar({ controls, hls, visible }: ControlBarProps) {
             aria-label="Volume"
           />
         </div>
-        <div className="flex-1" />
+        <div className="min-w-0 flex-1" aria-hidden />
         {levels.length > 0 && (
-          <QualitySelector
-            levels={levels}
-            currentLevel={currentLevel}
-            onSelect={setLevel}
-          />
+          <div className="shrink-0">
+            <QualitySelector
+              levels={levels}
+              currentLevel={currentLevel}
+              onSelect={setLevel}
+            />
+          </div>
+        )}
+        {predefinedStreams && predefinedStreams.length > 0 && onSelectStream && (
+          <div className="shrink-0">
+            <StreamSwitcher
+              streams={predefinedStreams}
+              currentStreamUrl={currentStreamUrl ?? null}
+              onSelectStream={onSelectStream}
+            />
+          </div>
         )}
         {piPSupported && (
           <button
             type="button"
             onClick={togglePiP}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
+            className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
             aria-label={isPiP ? "Exit Picture-in-Picture" : "Picture-in-Picture"}
           >
             <PictureInPicture className="h-5 w-5" />
@@ -139,7 +142,7 @@ export function ControlBar({ controls, hls, visible }: ControlBarProps) {
         <button
           type="button"
           onClick={toggleFullscreen}
-          className="flex min-h-[44px] min-w-[44px] items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
           aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
         >
           {isFullscreen ? (
