@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { useF1Live } from "@/hooks/useF1Live";
 import { Loader2, RefreshCw } from "lucide-react";
 import type { F1Driver, F1Interval, F1Position } from "@/hooks/useF1Live";
+import { getTeamLogoPath } from "@/lib/f1-teams";
 
 function formatGap(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
@@ -96,6 +98,7 @@ export function F1StatsSidebar() {
               {sortedPositions.map((pos) => {
                 const driver = driverMap.get(pos.driver_number);
                 const interval = latestIntervalByDriver.get(pos.driver_number);
+                const teamLogoPath = getTeamLogoPath(driver?.team_name);
                 const gap =
                   pos.position === 1
                     ? null
@@ -113,8 +116,22 @@ export function F1StatsSidebar() {
                         {driver?.name_acronym ?? `#${pos.driver_number}`}
                       </span>
                     </td>
-                    <td className="truncate py-2 pr-2 text-zinc-500 max-w-[80px]">
-                      {driver?.team_name ?? "—"}
+                    <td className="py-2 pr-2 text-zinc-500 max-w-[100px]">
+                      <div className="flex items-center gap-1.5 truncate">
+                        {teamLogoPath && (
+                          <Image
+                            src={teamLogoPath}
+                            alt=""
+                            width={20}
+                            height={20}
+                            className="size-5 shrink-0 object-contain"
+                            title={driver?.team_name}
+                          />
+                        )}
+                        <span className="truncate">
+                          {driver?.team_name ?? "—"}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-2 text-right tabular-nums text-zinc-500">
                       {formatGap(gap)}
