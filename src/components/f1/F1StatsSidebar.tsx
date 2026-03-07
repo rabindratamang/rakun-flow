@@ -30,17 +30,27 @@ export function F1StatsSidebar() {
     return m;
   }, [intervals]);
 
-  const sortedPositions = useMemo(() => {
-    // One row per driver: keep best (lowest) position per driver_number
-    const byDriver = new Map<number, F1Position>();
+  const standingsRows = useMemo(() => {
+    // Best (lowest) position per driver_number from positions API
+    const positionByDriver = new Map<number, F1Position>();
     for (const pos of positions) {
-      const existing = byDriver.get(pos.driver_number);
+      const existing = positionByDriver.get(pos.driver_number);
       if (!existing || pos.position < existing.position) {
-        byDriver.set(pos.driver_number, pos);
+        positionByDriver.set(pos.driver_number, pos);
       }
     }
-    return [...byDriver.values()].sort((a, b) => a.position - b.position);
-  }, [positions]);
+    // Drivers with a position: sorted by position
+    const withPosition: Array<{ driver_number: number; position: number; pos: F1Position }> = [...positionByDriver.entries()]
+      .map(([driver_number, pos]) => ({ driver_number, position: pos.position, pos }))
+      .sort((a, b) => a.position - b.position);
+    const driverNumbersWithPosition = new Set(positionByDriver.keys());
+    // Drivers with no position: include all from drivers list, sorted by driver_number
+    const withoutPosition = drivers
+      .filter((d) => !driverNumbersWithPosition.has(d.driver_number))
+      .sort((a, b) => a.driver_number - b.driver_number)
+      .map((d) => ({ driver_number: d.driver_number, position: null as number | null, pos: null as F1Position | null }));
+    return [...withPosition.map((x) => ({ driver_number: x.driver_number, position: x.position as number, pos: x.pos })), ...withoutPosition];
+  }, [positions, drivers]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#121212]">
@@ -84,7 +94,7 @@ export function F1StatsSidebar() {
           </p>
         )}
 
-        {session && (loading ? sortedPositions.length > 0 : true) && (
+        {session && (loading ? standingsRows.length > 0 : true) && (
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#333] text-zinc-500">
@@ -95,25 +105,28 @@ export function F1StatsSidebar() {
               </tr>
             </thead>
             <tbody>
-              {sortedPositions.map((pos) => {
-                const driver = driverMap.get(pos.driver_number);
-                const interval = latestIntervalByDriver.get(pos.driver_number);
+              {standingsRows.map((row) => {
+                const driver = driverMap.get(row.driver_number);
+                const interval = latestIntervalByDriver.get(row.driver_number);
                 const teamLogoPath = getTeamLogoPath(driver?.team_name);
+                const position = row.position;
                 const gap =
-                  pos.position === 1
+                  position === 1
                     ? null
-                    : interval?.gap_to_leader ?? interval?.interval;
+                    : position != null
+                      ? interval?.gap_to_leader ?? interval?.interval
+                      : null;
                 return (
                   <tr
-                    key={`${pos.driver_number}-${pos.position}`}
+                    key={row.driver_number}
                     className="border-b border-[#333]/50 transition-colors hover:bg-white/5"
                   >
                     <td className="py-2 pr-2 font-medium text-zinc-300">
-                      {pos.position}
+                      {position != null ? position : "—"}
                     </td>
                     <td className="py-2 pr-2">
                       <span className="font-medium text-foreground">
-                        {driver?.name_acronym ?? `#${pos.driver_number}`}
+                        {driver?.name_acronym ?? `#${row.driver_number}`}
                       </span>
                     </td>
                     <td className="py-2 pr-2 text-zinc-500 max-w-[100px]">
@@ -143,7 +156,7 @@ export function F1StatsSidebar() {
           </table>
         )}
 
-        {session && !loading && sortedPositions.length === 0 && (
+        {session && !loading && standingsRows.length === 0 && (
           <p className="py-4 text-center text-sm text-zinc-500">
             No position data yet
           </p>
