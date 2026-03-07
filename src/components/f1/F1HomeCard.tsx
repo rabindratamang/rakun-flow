@@ -48,7 +48,10 @@ function CountdownUnit({
   label: string;
 }) {
   return (
-    <div className="flex min-w-0 flex-shrink flex-col items-center justify-center" style={{ perspective: "120px" }}>
+    <div
+      className="flex min-w-0 flex-1 flex-col items-center justify-center text-center"
+      style={{ perspective: "120px" }}
+    >
       <span
         key={value}
         className="tabular-nums font-black text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] animate-[countdown-flip_0.35s_ease-out]"
@@ -56,7 +59,7 @@ function CountdownUnit({
       >
         {value}
       </span>
-      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/90">
+      <span className="mt-1 block text-[10px] font-semibold uppercase tracking-widest text-white/90">
         {label}
       </span>
     </div>
@@ -168,7 +171,7 @@ export function F1HomeCard() {
               {countdownParts && (
                 <div
                   data-refresh={tick}
-                  className="mt-2 flex min-w-0 items-center justify-between gap-1 rounded-lg px-3 py-2 sm:gap-2"
+                  className="mt-2 flex min-w-0 items-stretch justify-between gap-3 rounded-lg px-4 py-3 sm:gap-4"
                   style={{
                     background: "linear-gradient(135deg, #B20000 0%, #8B0000 100%)",
                     boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
