@@ -85,20 +85,11 @@ export function Player() {
   // Show URL bar when there's no source and no query param
   const displayUrlBar = showUrlBar && !hls.source;
 
-  // In fullscreen (or touch), respect controlsVisible so auto-hide works. Otherwise show on hover.
-  const hasHover = typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
-  const showControls =
-    controls.controlsVisible ||
-    !controls.isPlaying ||
-    (hasHover && !controls.isFullscreen);
+  // Bar visible when user recently interacted or video is paused. Auto-hide after 1s when playing.
+  const showControls = controls.controlsVisible || !controls.isPlaying;
 
-  // Auto-hide controls after 1s when playing: on touch devices, or in fullscreen (inactivity)
-  const isTouchDevice =
-    typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-  const shouldAutoHideControls =
-    hls.source &&
-    controls.isPlaying &&
-    (isTouchDevice || controls.isFullscreen);
+  // Auto-hide controls after 1s when playing (all cases: fullscreen or not)
+  const shouldAutoHideControls = hls.source && controls.isPlaying;
   useEffect(() => {
     if (!shouldAutoHideControls) return;
     const t = setTimeout(() => controls.hideControls(), 1000);
@@ -108,11 +99,7 @@ export function Player() {
   const handleContainerMouseMove = useCallback(() => {
     controls.showControls();
   }, [controls]);
-  const handleContainerMouseLeave = useCallback(() => {
-    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches && !controls.isFullscreen) {
-      controls.hideControls();
-    }
-  }, [controls]);
+  const handleContainerMouseLeave = useCallback(() => {}, []);
 
   return (
     <div
