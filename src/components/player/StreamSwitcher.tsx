@@ -22,6 +22,7 @@ export function StreamSwitcher({
   const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     onOpenChange?.(isOpen);
@@ -38,19 +39,19 @@ export function StreamSwitcher({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
     };
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+    const handlePointerDown = (e: PointerEvent) => {
       const target = e.target as Node;
-      if (rootRef.current && !rootRef.current.contains(target)) {
+      const outsideRoot = !rootRef.current?.contains(target);
+      const outsideMenu = !menuRef.current?.contains(target);
+      if (outsideRoot && outsideMenu) {
         setIsOpen(false);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown, { passive: true });
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [isOpen]);
 
@@ -103,6 +104,7 @@ export function StreamSwitcher({
               onClick={() => setIsOpen(false)}
             />
             <div
+              ref={menuRef}
               role="listbox"
               aria-label="Stream options"
               className="fixed inset-x-0 bottom-0 z-[101] max-h-[50vh] overflow-auto rounded-t-2xl border border-b-0 border-[#333] bg-[#1a1a1a] shadow-2xl md:inset-auto md:max-h-[70vh] md:min-w-[200px] md:rounded-lg md:border md:shadow-xl"
