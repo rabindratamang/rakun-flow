@@ -107,7 +107,7 @@ export function Player() {
       tabIndex={0}
       role="application"
       aria-label="Video player"
-      className="relative flex h-screen w-full min-h-0 flex-col overflow-hidden bg-[#121212] outline-none"
+      className="relative flex h-full w-full min-h-0 flex-col overflow-hidden bg-[#121212] outline-none"
       onMouseMove={handleContainerMouseMove}
       onMouseLeave={handleContainerMouseLeave}
     >
