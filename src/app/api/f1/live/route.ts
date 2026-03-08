@@ -8,6 +8,7 @@ const OPENF1_BASE = "https://api.openf1.org/v1";
 const CACHE_TTL_WHEN_ONGOING_MS = 10_000; // refresh every 10s when race is ongoing
 const CACHE_TTL_WHEN_NOT_ONGOING_MS = 24 * 60 * 60 * 1000; // 24h when not ongoing
 const MEETING_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h for current/upcoming meeting info
+const ONGOING_CHECK_TTL_MS = 60_000; // only call OpenF1 for "is session ongoing?" once per 60s
 const DELAY_BETWEEN_REQUESTS_MS = 400; // 4 req over ~1.6s = under 3 req/s
 
 type LiveCacheEntry = {
@@ -20,8 +21,15 @@ type MeetingCacheEntry = {
   expiresAt: number;
 };
 
+type OngoingCheckEntry = {
+  ongoing: boolean;
+  expiresAt: number;
+};
+
 let liveCache: LiveCacheEntry | null = null;
 let meetingCache: MeetingCacheEntry | null = null;
+let ongoingCheckCache: OngoingCheckEntry | null = null;
+let refreshPromise: Promise<void> | null = null;
 
 /** Current/upcoming meeting info (same shape as upcoming route payload). */
 export interface F1MeetingInfo {
@@ -161,7 +169,7 @@ function uniqueDrivers(rows: F1Driver[]): F1Driver[] {
 }
 
 /** Determine if the latest session is ongoing (now between date_start and date_end). */
-async function isSessionOngoing(): Promise<boolean> {
+async function isSessionOngoingUncached(): Promise<boolean> {
   const sessions = await fetchOpenF1Optional<OpenF1SessionLatest[]>(
     "/sessions?session_key=latest"
   );
@@ -171,6 +179,20 @@ async function isSessionOngoing(): Promise<boolean> {
   const start = new Date(session.date_start).getTime();
   const end = new Date(session.date_end).getTime();
   return now >= start && now <= end;
+}
+
+/** Cached to avoid hitting OpenF1 on every GET (stays under 3 req/s, 30 req/min). */
+async function isSessionOngoing(): Promise<boolean> {
+  const now = Date.now();
+  if (ongoingCheckCache && ongoingCheckCache.expiresAt > now) {
+    return ongoingCheckCache.ongoing;
+  }
+  const ongoing = await isSessionOngoingUncached();
+  ongoingCheckCache = {
+    ongoing,
+    expiresAt: now + ONGOING_CHECK_TTL_MS,
+  };
+  return ongoing;
 }
 
 function sessionToEventLabel(session: OpenF1SessionLatest): string {
@@ -312,7 +334,7 @@ export async function GET() {
   const now = Date.now();
 
   try {
-    const isOngoing = await isSessionOngoing();
+    const isOngoing =   await isSessionOngoing();
     await delay(DELAY_BETWEEN_REQUESTS_MS);
 
     // Have cache and race is not ongoing: return cache, do not refetch
@@ -325,11 +347,20 @@ export async function GET() {
     // Ongoing: refresh live every 10s; refresh meeting info when expired (24h)
     if (isOngoing) {
       if (!liveCache || liveCache.expiresAt <= now) {
-        const data = await fetchLiveData();
-        liveCache = {
-          data,
-          expiresAt: now + CACHE_TTL_WHEN_ONGOING_MS,
-        };
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            try {
+              const data = await fetchLiveData();
+              liveCache = {
+                data,
+                expiresAt: Date.now() + CACHE_TTL_WHEN_ONGOING_MS,
+              };
+            } finally {
+              refreshPromise = null;
+            }
+          })();
+        }
+        await refreshPromise;
       }
       if (!meetingCache || meetingCache.expiresAt <= now) {
         const meeting = await getCurrentMeetingForLive().catch(() => null);

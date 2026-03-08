@@ -2,33 +2,6 @@ import Hls, { type Level } from "hls.js";
 
 const HLS_MIME = "application/vnd.apple.mpegurl";
 
-/** Minimum interval (ms) between fetches to the same URL to reduce manifest/playlist polling. */
-const MIN_PLAYLIST_FETCH_INTERVAL_MS = 1000;
-
-const lastFetchByUrl = new Map<string, number>();
-
-function throttleFetchSetup(
-  context: { url: string; responseType?: string },
-  initParams: RequestInit
-): Promise<Request> {
-  const url = context.url;
-  const now = Date.now();
-  const last = lastFetchByUrl.get(url) ?? 0;
-  const elapsed = now - last;
-  const waitMs = Math.max(0, MIN_PLAYLIST_FETCH_INTERVAL_MS - elapsed);
-
-  if (waitMs > 0) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        lastFetchByUrl.set(url, Date.now());
-        resolve(new Request(url, initParams as RequestInit));
-      }, waitMs);
-    });
-  }
-  lastFetchByUrl.set(url, now);
-  return Promise.resolve(new Request(url, initParams as RequestInit));
-}
-
 /**
  * Whether the browser supports native HLS (e.g. Safari).
  */
@@ -62,9 +35,7 @@ export function attachHlsSource(
     onError?.(new Error("Unsupported stream. HLS is not supported in this browser."));
     return null;
   }
-  const hls = new Hls({
-    fetchSetup: throttleFetchSetup,
-  });
+  const hls = new Hls();
   hls.loadSource(url);
   hls.attachMedia(video);
   hls.on(Hls.Events.MANIFEST_PARSED, (_event, data) => {

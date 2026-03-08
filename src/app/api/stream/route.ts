@@ -99,8 +99,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": contentType.includes("mpegurl") ? contentType : HLS_M3U8,
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        Pragma: "no-cache",
+        "Cache-Control": "public, max-age=1, must-revalidate",
       },
     });
   }
@@ -111,8 +110,7 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": res.headers["content-type"] ?? MP2T,
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      Pragma: "no-cache",
+      "Cache-Control": "public, max-age=1, must-revalidate",
     },
   });
 }
