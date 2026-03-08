@@ -59,8 +59,12 @@ export function Player({ predefinedStreams }: PlayerProps) {
     const onCanPlay = () => {
       setIsLoading(false);
       if (!autoPlayDoneRef.current) {
-        video.play().catch(() => {});
         autoPlayDoneRef.current = true;
+        video
+          .play()
+          .catch(() => {
+            // Autoplay blocked (e.g. iOS); loading already cleared — tap-to-play overlay will show
+          });
       }
     };
     const onError = () => setIsLoading(false);

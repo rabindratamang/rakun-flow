@@ -19,7 +19,13 @@ export function usePlayerControls(
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const play = useCallback(() => {
-    videoRef.current?.play().then(() => setIsPlaying(true));
+    const v = videoRef.current;
+    if (!v) return;
+    v.play()
+      .then(() => setIsPlaying(true))
+      .catch(() => {
+        // Playback failed (e.g. iOS autoplay policy); keep isPlaying false so tap-to-play stays visible
+      });
   }, []);
   const pause = useCallback(() => {
     videoRef.current?.pause();

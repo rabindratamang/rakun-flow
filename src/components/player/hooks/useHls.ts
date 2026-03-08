@@ -91,7 +91,11 @@ export function useHls(videoRef: React.RefObject<HTMLVideoElement | null>) {
 
       if (!hls) {
         const handler = () => {
-          setError(new Error(mediaErrorMessage(video.error)));
+          const err = video.error;
+          if (process.env.NODE_ENV === "development" && err) {
+            console.debug("[hls] native video error", { code: err.code, message: err.message });
+          }
+          setError(new Error(mediaErrorMessage(err)));
         };
         nativeErrorHandlerRef.current = handler;
         video.addEventListener("error", handler);

@@ -28,8 +28,14 @@ export function attachHlsSource(
   onError?: (error: unknown) => void
 ): Hls | null {
   if (canPlayNativeHls(video)) {
+    if (process.env.NODE_ENV === "development") {
+      console.debug("[hls] using native HLS (e.g. Safari)", { url: url.slice(0, 80) });
+    }
     video.src = url;
     return null;
+  }
+  if (process.env.NODE_ENV === "development") {
+    console.debug("[hls] using hls.js (MSE)", { url: url.slice(0, 80) });
   }
   if (!Hls.isSupported()) {
     onError?.(new Error("Unsupported stream. HLS is not supported in this browser."));

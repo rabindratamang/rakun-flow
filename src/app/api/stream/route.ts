@@ -81,19 +81,54 @@ export async function GET(request: NextRequest) {
     const requestUrl = new URL(request.url);
     const proxyBase = `${requestUrl.origin}/api/stream?url=`;
 
+    /** Rewrite a single URI (relative or absolute) to proxy URL. */
+    const rewriteUri = (uri: string): string => {
+      try {
+        const absolute = new URL(uri, baseOrigin).toString();
+        return proxyBase + encodeURIComponent(absolute);
+      } catch {
+        return uri;
+      }
+    };
+
+    /** Rewrite URI="..." or URI='...' attributes inside HLS tag lines (e.g. EXT-X-KEY, EXT-X-MAP, EXT-X-MEDIA). */
+    const rewriteTagUriAttributes = (line: string): string => {
+      return line.replace(
+        /URI=(?:"([^"]*)"|'([^']*)')/gi,
+        (match, doubleQuoted, singleQuoted) => {
+          const uri = doubleQuoted ?? singleQuoted ?? "";
+          return `URI="${rewriteUri(uri)}"`;
+        }
+      );
+    };
+
+    let lineUriRewrites = 0;
+    let tagUriRewrites = 0;
+
     const rewritten = body
       .split("\n")
       .map((line) => {
         const trimmed = line.trimEnd();
-        if (!trimmed || trimmed.startsWith("#")) return line;
+        if (!trimmed) return line;
+        if (trimmed.startsWith("#")) {
+          const before = trimmed;
+          const after = rewriteTagUriAttributes(trimmed);
+          if (after !== before) tagUriRewrites++;
+          return after;
+        }
         try {
           const absolute = new URL(trimmed, baseOrigin).toString();
+          lineUriRewrites++;
           return proxyBase + encodeURIComponent(absolute);
         } catch {
           return line;
         }
       })
       .join("\n");
+
+    if (process.env.NODE_ENV === "development" && (lineUriRewrites > 0 || tagUriRewrites > 0)) {
+      console.debug("[stream proxy] manifest rewrite:", { lineUriRewrites, tagUriRewrites });
+    }
 
     return new NextResponse(rewritten, {
       status: 200,
