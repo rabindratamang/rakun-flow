@@ -52,7 +52,6 @@ export function ControlBar({
     isPiP,
     togglePlay,
     seekTo,
-    setVolume,
     toggleMute,
     toggleFullscreen,
     togglePiP,
@@ -88,30 +87,18 @@ export function ControlBar({
             <Play className="h-6 w-6" />
           )}
         </button>
-        <div className="flex min-h-[44px] shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={toggleMute}
-            className="flex min-h-[44px] min-w-[44px] items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
-            aria-label={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted || volume === 0 ? (
-              <VolumeX className="h-5 w-5" />
-            ) : (
-              <Volume2 className="h-5 w-5" />
-            )}
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={isMuted ? 0 : volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="h-2 w-24 accent-[#00f2ff] transition-opacity duration-200 ease-in-out md:w-28"
-            aria-label="Volume"
-          />
-        </div>
+        <button
+          type="button"
+          onClick={toggleMute}
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-foreground transition-opacity duration-200 ease-in-out hover:opacity-90"
+          aria-label={isMuted ? "Unmute" : "Mute"}
+        >
+          {isMuted || volume === 0 ? (
+            <VolumeX className="h-5 w-5" />
+          ) : (
+            <Volume2 className="h-5 w-5" />
+          )}
+        </button>
         <div className="min-w-0 flex-1" aria-hidden />
         {levels.length > 0 && (
           <div className="shrink-0">
