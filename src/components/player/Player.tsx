@@ -123,7 +123,7 @@ export function Player({ predefinedStreams }: PlayerProps) {
         <video
           ref={videoRef}
           className="h-full w-full object-contain transition-[filter] duration-200 ease-in-out"
-          style={{ filter: hls.source && !controls.isPlaying && !isLoading ? "blur(8px)" : "none" }}
+          style={{ filter: hls.source && !controls.isPlaying && !isLoading ? "blur(1px)" : "none" }}
           playsInline
           onClick={() => {
             if (!controls.isPlaying) controls.play();
