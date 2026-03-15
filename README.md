@@ -22,10 +22,13 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 After HLS or player changes, validate on real devices:
 
-1. **iPhone Safari** and **iPad Safari**: load a stream and confirm it starts (or tap Play if autoplay is blocked).
-2. Test with at least: a plain `.m3u8` stream, an encrypted HLS stream (`EXT-X-KEY`), and an fMP4 stream using `EXT-X-MAP`.
-3. Confirm: no perpetual loading spinner, tap-to-play works when autoplay is blocked, and playback begins.
-4. **Regression**: verify the same streams still work in Chrome/Edge (hls.js path).
+1. **iPhone Safari**: uses native HLS; load a stream and confirm it starts (or tap Play if autoplay is blocked).
+2. **iPad Safari**: uses hls.js when supported (proxy Range/206 and HEAD apply); same checks as above.
+3. Test with at least: a plain `.m3u8` stream, an encrypted HLS stream (`EXT-X-KEY`), and an fMP4 stream using `EXT-X-MAP`; if available, a byte-range playlist.
+4. Confirm: no perpetual loading spinner, tap-to-play works when autoplay is blocked, and playback/seek probes succeed.
+5. **Regression**: verify the same streams still work in Chrome/Edge (hls.js path).
+
+The stream proxy supports optional query params `origin` and `referer` for upstream requests when required by the provider (e.g. `?url=...&origin=https://example.com&referer=https://example.com/`).
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
